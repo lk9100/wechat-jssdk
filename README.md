@@ -8,10 +8,13 @@
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
 
-Next-Generation WeChat JS-SDK integration with NodeJS.  
+Next-Generation WeChat JS-SDK integration with NodeJS.
 > The next major version(v4) will drop node v4 support(may still work, but won't test against v4)
 
+> :warning:This doc is for the upcoming v4, go to [v3 doc](https://github.com/JasonBoy/wechat-jssdk/tree/v3.1.x) if you are using v3
+
 [中文使用文档](https://github.com/JasonBoy/wechat-jssdk/wiki/%E4%B8%AD%E6%96%87%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3)
+[Change Log](https://github.com/JasonBoy/wechat-jssdk/releases)
 
 ![wechat-jssdk-demo](https://raw.githubusercontent.com/JasonBoy/wechat-jssdk/master/demo/wechat-jssdk-demo-new.gif)
 
@@ -22,24 +25,29 @@ Next-Generation WeChat JS-SDK integration with NodeJS.
   - [:unlock:OAuth](#oauth)
   - [:fries:Cards and Offers(v3.1+)](#cards-and-offers)
   - [:credit_card:Wechat Payment(v3.1+)](#payment)
+  - [:baby_chick:Wechat Mini Program(v4+)](#mini-program)
   - [:cd:Using Stores](#using-stores)
   - [:movie_camera:Full Featured Demo](#demo)
 
 ## Usage
 
-`npm install wechat-jssdk --save` or    
-`yarn add wechat-jssdk`  
-
+```bash
+# use "next" tag to try the v4
+npm install wechat-jssdk@next --save
+# or
+yarn add wechat-jssdk@next
 ```
-const Wechat = require('wechat-jssdk');
+
+```javascript
+const {Wechat} = require('wechat-jssdk');
 const wx = new Wechat(wechatConfig);
 ```
 
 ## Wechat Config
 
-`wechatConfig` info:  
+`wechatConfig` info:
 
-```
+```javascript
 {
   //set your oauth redirect url, defaults to localhost
   "wechatRedirectUrl": "http://yourdomain.com/wechat/oauth-callback",
@@ -54,16 +62,21 @@ const wx = new Wechat(wechatConfig);
   paymentCertificatePfx: fs.readFileSync(path.join(process.cwd(), 'cert/apiclient_cert.p12')),
   //default payment notify url
   paymentNotifyUrl: `http://your.domain.com/api/wechat/payment/`,
+  //mini program config
+  "miniProgram": {
+    "appId": "mp_appid",
+    "appSecret": "mp_app_secret",
+  }
 }
 ```
 
-### Setup your Wechat ENV  
-1.Set your own URL in [Wechat Website](https://mp.weixin.qq.com)  
-  
-  Usually wechat will provide you a `MP_verify_XHZon7GAGRdcAFxx.txt` like file to ask you to put that on your website root,  
+### Setup your Wechat ENV
+1.Set your own URL in [Wechat Website](https://mp.weixin.qq.com)
+
+  Usually wechat will provide you a `MP_verify_XHZon7GAGRdcAFxx.txt` like file to ask you to put that on your website root,
   which will be accessed by wechat on `http://yourdomain.com/MP_verify_XHZon7GAGRdcAFxx.txt` to verify that you own the domain.
-  
-2.You should also provide a api for your browser to get token for the current url, see [demo](#demo)  
+
+2.You should also provide a api for your browser to get token for the current url, see [demo](#demo)
 
   ```javascript
   //express app for example:
@@ -84,8 +97,8 @@ const wx = new Wechat(wechatConfig);
 const WechatJSSDK = require('wechat-jssdk/dist/client');
 //ES6 import
 import WechatJSSDK from 'wechat-jssdk/dist/client';
-//or import the original ES6 module from 'lib/client', 
-// in which case you may need to include this into your webpack babel-loader process 
+//or import the original ES6 module from 'lib/client',
+// in which case you may need to include this into your webpack babel-loader process
 import WechatJSSDK from 'wechat-jssdk/lib/client';
 const wechatObj = new WechatJSSDK(config)
 
@@ -103,18 +116,19 @@ const config = {
   'timestamp': 'your_timestamp',
   //below are optional
   //invoked if wechat signature sign succeeds,
-  //'this' will be the jssdk instance if it's a normal function, 
+  //'this' will be the jssdk instance if it's a normal function,
   // in v3.0.10+, jssdk instance will be passed to the callback, (wxObj) => {}
   // in the up coming v4, "success"/"error" init callback will be replace by #initialize() which will return Promise, see below
-  'success': jssdkInstance => {},
+  //'success': jssdkInstance => {},
   //invoked if sign failed, in v3.0.10+, jssdk instance will be pass to the func, (err, wxObj) => {}
-  'error': (err, jssdkInstance) => {},
+  //'error': (err, jssdkInstance) => {},
   //enable debug mode, same as debug
   'debug': true,
   'jsApiList': [], //optional, pass all the jsapi you want, the default will be ['onMenuShareTimeline', 'onMenuShareAppMessage']
   'customUrl': '' //set custom weixin js script url, usually you don't need to add this js manually
 }
-const wechatObj = new WechatJSSDK(config);
+//in v3
+//const wechatObj = new WechatJSSDK(config);
 //in the up coming v4, use "initialize" as Promise:
 const wechatObj2 = new WechatJSSDK(config);
 wechatObj2.initialize()
@@ -163,16 +177,16 @@ wechatObj.callWechatApi('onMenuShareAppMessage', {
   cancel: function (){}
 });
 ```
-or with the original one:  
+or with the original one:
 `wechatObj.getOriginalWx().onMenuShareAppMessage(config)`
 
 ## OAuth
 Wechat support web OAuth to get user profile in wechat app.
-In your page, provide a link, which you can get by `wx.oauth.snsUserInfoUrl` which is the default oauth url, to the wechat OAuth page,  
+In your page, provide a link, which you can get by `wx.oauth.snsUserInfoUrl` which is the default oauth url, to the wechat OAuth page,
 also you need provide a callback url(as show below) to get the wechat code after user click Agree button, the callback url is configured in the `wechatConfig` object above while initializing,
 but you can customize your own callback url by using `wx.oauth.generateOAuthUrl(customUrl, scope, state)` api.
 ```javascript
-//in node: 
+//in node:
 const wx = new Wechat(config);
 const url = wx.oauth.generateOAuthUrl('http://mycustom.com/oauth-callback', 'snsapi_userinfo', 'custom_state');
 res.render("oauth-page", {
@@ -183,32 +197,59 @@ res.render("oauth-page", {
 //custom callback url, agree clicked by user, come back here:
 router.get('/oauth-callback', function (req, res) {
   wx.oauth.getUserInfo(req.query.code)
-          .then(function(userProfile) {
-            console.log(userProfile)
-            res.render("demo", {
-              wechatInfo: userProfile
-            });
-          });
+    .then(function(userProfile) {
+      console.log(userProfile)
+      res.render("demo", {
+        wechatInfo: userProfile
+      });
+    });
 });
 ```
 
 ## Cards and Offers
 
-Set `card: true` in config to enable the cards support on server side, see [demo](#demo).  
+Set `card: true` in config to enable the cards support on server side, see [demo](#demo).
 For cards APIs, see [cards apis](https://github.com/JasonBoy/wechat-jssdk/wiki/API#card-apis)
 
 ## Payment
 
-Set `payment: true` in config to enable the payment support on server side, you should also provide payment related info.  
-See [demo](#demo).  
+Set `payment: true` in config to enable the payment support on server side, you should also provide payment related info.
+See [demo](#demo).
 For payment APIs, see [payment apis](https://github.com/JasonBoy/wechat-jssdk/wiki/API#payment-apis)
+
+## Mini Program
+
+To enable mini program support, you can just set mini program `appId` & `appSecret` in config:
+```javascript
+const { Wechat, MiniProgram } = require('wechat-jssdk');
+const wechatConfig = {
+  "appId": "appid",
+  "appSecret": "app_secret",
+  //...other configs
+  //...
+  //mini program config
+  "miniProgram": {
+    "appId": "mp_appid",
+    "appSecret": "mp_app_secret",
+  }
+};
+const wx = new Wechat(wechatConfig);
+//access mini program instance
+wx.miniProgram.getSession('code');
+
+//Use MiniProgram directly
+const miniProgram = new MiniProgram({
+  "appId": "mp_appid",
+  "appSecret": "mp_app_secret",
+})
+```
 
 ## Using Stores
 
-*New in V3*  
+*New in V3+*
 [Store](https://github.com/JasonBoy/wechat-jssdk/wiki/Store) are used to save url signatures into files, dbs, etc..., but also keep a copy in memory for better performence.
-The default store used is `FileStore` which will persist tokens and signatures into `wechat-info.json` file every 10 minutes, also it will load these info from the file in next initialization.  
-Built in Stores: `FileStore`, `MongoStore`,  
+The default store used is `FileStore` which will persist tokens and signatures into `wechat-info.json` file every 10 minutes, also it will load these info from the file in next initialization.
+Built in Stores: `FileStore`, `MongoStore`,
 ### Using Custom Stores:
 
 ```javascript
@@ -254,14 +295,14 @@ see [API wiki](https://github.com/JasonBoy/wechat-jssdk/wiki/API)
 
 ## Debug
 
-Add `DEBUG=wechat*` when start your app to enable wechat-jssdk debug  
+Add `DEBUG=wechat*` when start your app to enable wechat-jssdk debug
 `DEBUG=wechat* node your-app.js`
 
 ## Demo
 
-In v3.1.0, the demo page is updated to test the new added `Cards & Offers` and `Payment` support.  
-Copy the `demo/wechat-config-sample.js` to `demo/wechat-config.js`,  
-and use your own `appId`, `appSecret`, and other [configs](#wechat-config) like payment if your want to enable them. 
+In v3.1+, the demo page is updated to test the new added `Cards & Offers` and `Payment` support.
+Copy the `demo/wechat-config-sample.js` to `demo/wechat-config.js`,
+and use your own `appId`, `appSecret`, and other [configs](#wechat-config) like payment if your want to enable them.
 
 Use `npm start` or `npm run dev` to start the demo.
 
