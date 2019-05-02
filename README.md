@@ -1,6 +1,5 @@
 # wechat-jssdk
 [![npm](https://img.shields.io/npm/v/wechat-jssdk.svg?style=flat-square)](https://www.npmjs.com/package/wechat-jssdk)
-[![npm (tag)](https://img.shields.io/npm/v/wechat-jssdk/next.svg?style=flat-square)](https://github.com/JasonBoy/wechat-jssdk)
 [![node](https://img.shields.io/node/v/wechat-jssdk.svg?style=flat-square)](https://nodejs.org/)
 [![Building Status](https://img.shields.io/travis/JasonBoy/wechat-jssdk.svg?style=flat-square)](https://travis-ci.org/JasonBoy/wechat-jssdk)
 [![Coverage Status](https://img.shields.io/coveralls/github/JasonBoy/wechat-jssdk.svg?style=flat-square)](https://coveralls.io/github/JasonBoy/wechat-jssdk)
@@ -9,12 +8,10 @@
 
 
 Next-Generation WeChat JS-SDK integration with NodeJS.
-> The next major version(v4) will drop node v4 support(may still work, but won't test against v4)
-
-> :warning:This doc is for the upcoming v4, go to [v3 doc](https://github.com/JasonBoy/wechat-jssdk/tree/v3.1.x) if you are using v3
+> If you need node4 support ,use [v3](https://github.com/JasonBoy/wechat-jssdk/tree/v3.1.x)
 
 [中文使用文档](https://github.com/JasonBoy/wechat-jssdk/wiki/%E4%B8%AD%E6%96%87%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3)
-[Change Log](https://github.com/JasonBoy/wechat-jssdk/releases)
+[Changelog](https://github.com/JasonBoy/wechat-jssdk/releases)
 
 ![wechat-jssdk-demo](https://raw.githubusercontent.com/JasonBoy/wechat-jssdk/master/demo/wechat-jssdk-demo-new.gif)
 
@@ -32,10 +29,9 @@ Next-Generation WeChat JS-SDK integration with NodeJS.
 ## Usage
 
 ```bash
-# use "next" tag to try the v4
-npm install wechat-jssdk@next --save
+npm install wechat-jssdk --save
 # or
-yarn add wechat-jssdk@next
+yarn add wechat-jssdk
 ```
 
 ```javascript
@@ -80,13 +76,14 @@ const wx = new Wechat(wechatConfig);
 
   ```javascript
   //express app for example:
-  router.get('/get-signature', async (req, res) => {
+  router.get('/get-signature', (req, res) => {
     wx.jssdk.getSignature(req.query.url).then(signatureData => {
       res.json(signatureData);
     });
-    //use async/await
-    //const signatureData = await wx.jssdk.getSignature(req.query.url);
-    //res.json(signatureData);
+  });
+  //koa2/koa-router app for example:
+  router.get('/get-signature', async ctx => {
+    ctx.body = await wx.jssdk.getSignature(ctx.request.query.url);
   });
   ```
 3.Now you can get to the next step in your browser to pass the verification.
@@ -94,12 +91,9 @@ const wx = new Wechat(wechatConfig);
 
 ## Browser Side Usage
 ```javascript
-const WechatJSSDK = require('wechat-jssdk/dist/client');
+const WechatJSSDK = require('wechat-jssdk/dist/client.umd');
 //ES6 import
-import WechatJSSDK from 'wechat-jssdk/dist/client';
-//or import the original ES6 module from 'lib/client',
-// in which case you may need to include this into your webpack babel-loader process
-import WechatJSSDK from 'wechat-jssdk/lib/client';
+import WechatJSSDK from 'wechat-jssdk/dist/client.umd';
 const wechatObj = new WechatJSSDK(config)
 
 // or if you do not have a bundle process, just add the script tag, and access "WechatJSSDK" from window, e.g:
@@ -115,25 +109,15 @@ const config = {
   'signature': 'url_signature',
   'timestamp': 'your_timestamp',
   //below are optional
-  //invoked if wechat signature sign succeeds,
-  //'this' will be the jssdk instance if it's a normal function,
-  // in v3.0.10+, jssdk instance will be passed to the callback, (wxObj) => {}
-  // in the up coming v4, "success"/"error" init callback will be replace by #initialize() which will return Promise, see below
-  //'success': jssdkInstance => {},
-  //invoked if sign failed, in v3.0.10+, jssdk instance will be pass to the func, (err, wxObj) => {}
-  //'error': (err, jssdkInstance) => {},
   //enable debug mode, same as debug
   'debug': true,
   'jsApiList': [], //optional, pass all the jsapi you want, the default will be ['onMenuShareTimeline', 'onMenuShareAppMessage']
   'customUrl': '' //set custom weixin js script url, usually you don't need to add this js manually
 }
-//in v3
-//const wechatObj = new WechatJSSDK(config);
-//in the up coming v4, use "initialize" as Promise:
-const wechatObj2 = new WechatJSSDK(config);
-wechatObj2.initialize()
+const wechatObj = new WechatJSSDK(config);
+wechatObj.initialize()
   .then(w => {
-    //set up your share info just like in "success" function in config above
+    //set up your share info, "w" is the same instance as "wechatObj"
   })
   .catch(err => {
     console.error(err);
@@ -219,7 +203,7 @@ For payment APIs, see [payment apis](https://github.com/JasonBoy/wechat-jssdk/wi
 
 ## Mini Program
 
-To enable mini program support, you can just set mini program `appId` & `appSecret` in config:
+To enable mini program support([see API](https://github.com/JasonBoy/wechat-jssdk/wiki/API#mini-programv4)), you can just set mini program `appId` & `appSecret` in config:
 ```javascript
 const { Wechat, MiniProgram } = require('wechat-jssdk');
 const wechatConfig = {
@@ -239,14 +223,15 @@ wx.miniProgram.getSession('code');
 
 //Use MiniProgram directly
 const miniProgram = new MiniProgram({
-  "appId": "mp_appid",
-  "appSecret": "mp_app_secret",
+  miniProgram: {
+    "appId": "mp_appid",
+    "appSecret": "mp_app_secret",
+  }
 })
 ```
 
 ## Using Stores
 
-*New in V3+*
 [Store](https://github.com/JasonBoy/wechat-jssdk/wiki/Store) are used to save url signatures into files, dbs, etc..., but also keep a copy in memory for better performence.
 The default store used is `FileStore` which will persist tokens and signatures into `wechat-info.json` file every 10 minutes, also it will load these info from the file in next initialization.
 Built in Stores: `FileStore`, `MongoStore`,
@@ -254,9 +239,7 @@ Built in Stores: `FileStore`, `MongoStore`,
 
 ```javascript
 ...
-const Wechat = require('wechat-jssdk');
-const MongoStore = Wechat.MongoStore;
-const FileStore = Wechat.FileStore;
+const {Wechat, MongoStore, FileStore} = require('wechat-jssdk');
 const wx = new Wechat({
 	appId: 'xxx',
 	...,
@@ -279,7 +262,7 @@ const wx = new Wechat({
 You can also create own Store to store tokens anywhere you want, by doing that, you may need to extend the base `Store` class, and reimplement the [apis](https://github.com/JasonBoy/wechat-jssdk/wiki/Store) you need:
 
 ```javascript
-const Store = require('wechat-jssdk').Store;
+const {Store} = require('wechat-jssdk');
 class CustomStore extends Store {
 	constructor (options) {
 		super();
@@ -308,4 +291,4 @@ Use `npm start` or `npm run dev` to start the demo.
 
 ## LICENSE
 
-MIT @ 2016-2018 [jason](http://blog.lovemily.me)
+MIT @ 2016-present [jason](http://blog.lovemily.me)
