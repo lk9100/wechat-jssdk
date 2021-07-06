@@ -22,9 +22,9 @@ Next-Generation WeChat JS-SDK integration with NodeJS.
   - [:heartbeat:Server-Side](#usage)
   - [:heartpulse:Browser-Side](#browser-side-usage)
   - [:unlock:OAuth](#oauth)
-  - [:fries:Cards and Offers(v3.1+)](#cards-and-offers)
-  - [:credit_card:Wechat Payment(v3.1+)](#payment)
-  - [:baby_chick:Wechat Mini Program(v4+)](#mini-program)
+  - [:fries:Cards and Offers](#cards-and-offers)
+  - [:credit_card:Wechat Payment](#payment)
+  - [:baby_chick:Wechat Mini Program](#mini-program)
   - [:cd:Using Stores](#using-stores)
   - [:movie_camera:Full Featured Demo](#demo)
 
@@ -92,10 +92,13 @@ const wx = new Wechat(wechatConfig);
 
 
 ## Browser Side Usage
+
+You can use it from the browser side as follows. Since we have [configured the `browser` field in package.json](https://github.com/yuezk/wechat-jssdk/blob/3ab192a5a67e8db65b2ae6cd9978013eef363b73/package.json#L7), the bundlers (e.g., webpack or rollup, etc.) will resolve the module to `wechat-jssdk/dist/client.umd.js`.
+
 ```javascript
-const WechatJSSDK = require('wechat-jssdk/dist/client.umd');
+const WechatJSSDK = require('wechat-jssdk');
 //ES6 import
-import WechatJSSDK from 'wechat-jssdk/dist/client.umd';
+import WechatJSSDK from 'wechat-jssdk';
 const wechatObj = new WechatJSSDK(config)
 
 // or if you do not have a bundle process, just add the script tag, and access "WechatJSSDK" from window, e.g:
@@ -194,17 +197,20 @@ router.get('/oauth-callback', function (req, res) {
 
 ## Cards and Offers
 
+since(v3.1)  
 Set `card: true` in config to enable the cards support on server side, see [demo](#demo).
 For cards APIs, see [cards apis](https://github.com/JasonBoy/wechat-jssdk/wiki/API#card-apis)
 
 ## Payment
 
+since(v3.1)  
 Set `payment: true` in config to enable the payment support on server side, you should also provide payment related info.
 See [demo](#demo).
 For payment APIs, see [payment apis](https://github.com/JasonBoy/wechat-jssdk/wiki/API#payment-apis)
 
 ## Mini Program
 
+since(v4)  
 To enable mini program support([see API](https://github.com/JasonBoy/wechat-jssdk/wiki/API#mini-programv4)), you can just set mini program `appId` & `appSecret` in config:
 ```javascript
 const { Wechat, MiniProgram } = require('wechat-jssdk');
